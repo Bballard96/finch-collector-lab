@@ -5,6 +5,8 @@ from django.views.generic import ListView, DetailView
 from django.contrib.auth.views import LoginView
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Finch, Toy
 from .forms import FeedingForm
 
@@ -40,8 +42,9 @@ finches = [
 def about(request):
   return render(request, 'about.html')
 
+@login_required
 def finch_index(request):
-  finches = Finch.objects.all()
+  finches = Finch.objects.filter(user=request.user)
   return render(request, 'finches/index.html', { 'finches': finches})
 
 def home(request):
@@ -59,7 +62,7 @@ def finch_detail(request, finch_id):
   })
 
 
-class FinchCreate(CreateView):
+class FinchCreate(LoginRequiredMixin, CreateView):
   model = Finch 
   fields = ['name', 'breed', 'description', 'age']
 
@@ -117,7 +120,7 @@ def signup(request):
       user = form.save()
       # This is how we log a user in
       login(request, user)
-      return redirect('cat-index')
+      return redirect('finch-index')
     else:
       error_message = 'Invalid sign up - try again'
   # A bad POST or a GET request, so render signup.html with an empty form
